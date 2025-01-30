@@ -4,11 +4,11 @@ import { User } from '../models/user.model.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/apiResponse.js';
 
-const registerUser = asyncHandler( async (req, res, next) => {
-    res.status(200).json({
-        success: true,
-        message: "User registered successfully"
-    })
+const registerUser = asyncHandler(async (req, res, next) => {
+    // res.status(200).json({
+    //     success: true,
+    //     message: "User registered successfully"
+    // })
 
     // get user details from frontend
     // validation - not empty
@@ -23,8 +23,8 @@ const registerUser = asyncHandler( async (req, res, next) => {
     const { fullname, email, username, password } = req.body
     console.log(fullname, email, username, password);
 
-    if ([fullname,email,username,password].some((field) => field?.trim() ==="")){
-        throw new ApiError(400, "All fields are required")  
+    if ([fullname, email, username, password].some((field) => field?.trim() === "")) {
+        throw new ApiError(400, "All fields are required")
     }
 
     const existedUser = await User.findOne({
@@ -34,26 +34,26 @@ const registerUser = asyncHandler( async (req, res, next) => {
         ]
     })
 
-    if (existedUser){
+    if (existedUser) {
         throw new ApiError(409, "User already exists")
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
     console.log(avatarLocalPath);
     let coverImageLocalPath;
-    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
     }
     console.log(coverImageLocalPath);
 
-    if (!avatarLocalPath){
+    if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required")
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-    if (!avatar){
+    if (!avatar) {
         throw new ApiError(500, "Failed to upload avatar")
     }
     console.log(avatar);
@@ -67,13 +67,44 @@ const registerUser = asyncHandler( async (req, res, next) => {
         coverImage: coverImage || null
     })
 
-    const createdUser = User.findById(User._id).select("-password -refreshToken")
+    // const createdUser =   User.findById(User._id).select("-password -refreshToken")
 
-    if (!createdUser){
-        throw new ApiError(500, "Failed to create user")
-    }
+    // if (!createdUser){
+    //     throw new ApiError(500, "Failed to create user")
+    // }
 
-    return res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"))  
+    const createdUser = await User.findById(user._id)
+            .select("-password -refreshToken");
+
+        const userObject = createdUser ? JSON.parse(JSON.stringify(createdUser)) : null;
+
+        if (!userObject) {
+            throw new ApiError(500, "Failed to create user");
+        }
+
+    return res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"))
+
+    // try {
+    //     const createdUser = await User.findById(user._id)
+    //         .select("-password -refreshToken");
+
+    //     const userObject = createdUser ? JSON.parse(JSON.stringify(createdUser)) : null;
+
+    //     if (!userObject) {
+    //         throw new ApiError(500, "Failed to create user");
+    //     }
+
+    //     return res.status(201).json({
+    //         statusCode: 201,
+    //         data: userObject,
+    //         message: "User registered successfully",
+    //         success: true
+    //     });
+    // }
+    // catch (error) {
+    //     next(error); // Pass errors to the error handler middleware
+    // }
+
 
 
 
